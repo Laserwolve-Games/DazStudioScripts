@@ -1,0 +1,287 @@
+var nInstanceNumber = App.instanceName(); // The current instance number.
+
+var sMainFilePath = 'C:/laserwolveGames/';		// Here are filepaths and directories.
+var sExportFilePath = sMainFilePath + 'output/';
+var sScriptsPath = sMainFilePath + 'scripts/';
+var oSourceDirectory = new DzDir(sScriptsPath + 'engine' + nInstanceNumber);
+var oUnwantedCombos = new DzFile(sScriptsPath + 'unwantedCombos.csv');
+
+var aCharacters = oSourceDirectory.getFilesFromDir(['character_*'], true);		// Here are arrays of full filepaths to files.
+var aAnimations = oSourceDirectory.getFilesFromDir(['*animation_*'], true);
+var aGear = oSourceDirectory.getFilesFromDir(['gear_*'], true);
+var aItems = oSourceDirectory.getFilesFromDir(['item_*'], true);
+var aLoot = oSourceDirectory.getFilesFromDir(['loot_*'], true);
+var aProps = oSourceDirectory.getFilesFromDir(['prop_*'], true);
+var aSkins = oSourceDirectory.getFilesFromDir(['skin_*'], true);
+
+var oContentMgr = App.getContentMgr();		// Here are various managers and settings that we need.
+var oRenderMgr = App.getRenderMgr();
+var oIrayOptions = oRenderMgr.getRenderElementObjects()[1];
+var oRenderOptions = oRenderMgr.getRenderOptions();
+var oViewport = MainWindow.getViewportMgr().getActiveViewport().get3DViewport();
+var oActiveCanvasProperty = oIrayOptions.getPropertyGroups().findProperty('Active Canvas');
+
+var nAngles = 16;		// These are the parameters to be utilized.
+var nFrameRate = 30;
+var nFrameCount = 10;
+var nDistanceMultiplier = 2;
+var oItemImageSize = Size(256, 256);
+
+const nDEGREES_IN_CIRCLE = 360;		// These are constants, which aren't different from variables in ES5.
+const nDAZ_TICKS = 4800;
+
+var oRoot = Scene.findNodeByLabel('root');		// These are the nodes that are within the masterTemplate.
+var oMainLight = Scene.findNodeByLabel('mainLight');
+var oShadowLight = Scene.findNodeByLabel('shadowLight');
+var oItemLight = Scene.findNodeByLabel('itemLight');
+/*********************************************************************/
+function containsText(sSource, sTextToFind) // Check if a string contains another string.
+{
+	if (sSource) return sSource.indexOf(sTextToFind) !== -1;
+}
+/*********************************************************************/
+function unwantedComboCheck() // Check unwantedCombos.csv, and return true only if this combation is unwanted.
+{
+	oUnwantedCombos.open(oUnwantedCombos.ReadOnly);
+	var aUnwantedCombos = oUnwantedCombos.readLines();
+	oUnwantedCombos.close();
+
+	for (var i = 0; i != aUnwantedCombos.length; i++) // If every value either matches, or is blank, this is an unwanted combo.
+	{
+		var aComboLine = aUnwantedCombos[i].trim().split(',');
+
+		if((aComboLine[0] === sCharacterName || aComboLine[0] === '') && (aComboLine[1] === sAnimationName || aComboLine[1] === '') && (aComboLine[2] === sGearName || aComboLine[2] === '')) return true;
+	}
+}
+/*********************************************************************/
+function getName(sFileName) // Obtain the desired name out of a filepath or filename.
+{
+	return sFileName.split('_').pop().split('.')[0];
+}
+/*********************************************************************/
+function setMatte(bBool) // Set the Matte Parameter of a character and its children.
+{	
+	if (oCharacterMatteParameter)
+	{
+		oCharacterMatteParameter.setValue(bBool);
+		for (var i = 0; i != aCharacterChildren.length; i++)
+		{
+			var oChildMatteParameter = aCharacterChildren[i].findPropertyByLabel('Enable Iray Matte');
+			if (oChildMatteParameter) oChildMatteParameter.setValue(bBool);
+		}
+	}
+}
+/*********************************************************************/
+function renderCore(sRenderType, sName)
+{
+	var nDegrees = nDEGREES_IN_CIRCLE / nAngles;		// Here are variables we determined once we start rendering.
+	var nTicksPerFrame = nDAZ_TICKS / nFrameRate;
+	var nFramesTotal = Scene.getPlayRange().end / nTicksPerFrame; // This is 0-based.
+	
+	if (nFrameCount > nFramesTotal + 1) nFrameCount = nFramesTotal + 1; // If we want more frames then there are in the scene, just get every frame of the scene instead.
+	var nFrameDivider = nFramesTotal / nFrameCount;
+
+	for (var nAngle = 0; nAngle != nDEGREES_IN_CIRCLE; nAngle = nAngle + nDegrees) // Loop through each angle...
+	{
+		for (var nFrame = 0; nFrame != nFrameCount; nFrame++) // Loop through each frame...
+		{
+			var sFinalFilePath = sExportFilePath + sRenderType + '/' + sName + '_' + nAngle + '_' + nFrame + '.png'; // Conglamorate lots of variables to create our exporting filepath.
+
+			if (oSourceDirectory.exists(sFinalFilePath)) continue; // Set the filepath. If it already exists, skip it.
+			oRenderOptions.renderImgFilename = sFinalFilePath;
+
+			Scene.setFrame(Math.round(nFrameDivider * nFrame)); // Set the current frame, and angle.
+			oRoot.getYRotControl().setValue(nAngle);
+
+			if (containsText(sRenderType, 'Shadows')) // For shadows, move the root node off-screen along the Z axis of the shadowLight, toggle the shadow light and set the matte parameter(s).
+			{
+				oRoot.getXPosControl().setValue(252.2766 * nDistanceMultiplier);
+				oRoot.getYPosControl().setValue(596.9373 * nDistanceMultiplier);
+				oRoot.getZPosControl().setValue(541.0090 * nDistanceMultiplier);
+
+				oShadowLight.setVisible(true);
+				if(sRenderType === 'gearShadows') setMatte(true);
+			}
+			else
+			{
+				oRoot.getXPosControl().setValue(0);
+				oRoot.getYPosControl().setValue(0);
+				oRoot.getZPosControl().setValue(0);
+
+				oShadowLight.setVisible(false);
+				setMatte(false);	
+			}
+			if (sRenderType === 'gear') oActiveCanvasProperty.setValue(1);		// Set the appropriate canvas.
+			else oActiveCanvasProperty.setValue(0);
+			
+			while(backgroundProgressIsActive()) processEvents();		// Wait for everything else to finish first, specifically the mesh smoother, then render.
+			oRenderMgr.doRender();
+		}
+	}
+}
+/*********************************************************************
+
+							RENDER LOOPS
+
+*********************************************************************/
+for (var i = 0; i != aCharacters.length; i++) // For each character...
+{
+	oContentMgr.openFile(aCharacters[i], true);		// Merge in a character, and get its name.
+	var sCharacterName = getName(aCharacters[i]);
+
+	var oCharacter = Scene.findNodeByLabel('character');		// Set up the character.
+	var aCharacterChildren = oCharacter.getNodeChildren(false);
+	var oCharacterMatteParameter = oCharacter.findPropertyByLabel('Enable Iray Matte');
+	var aCharacterProperties = oCharacter.getPropertyList();
+	var bHasCharacterSkins;
+
+	oRoot.addNodeChild(oCharacter, true);
+
+	for (var j = 0; j != aAnimations.length; j++) // For each animation...
+	{
+		oContentMgr.openFile(aAnimations[j], true); // Merge in an animation.
+
+		var sAnimationName = getName(aAnimations[j]);
+
+		if(!aGear.length) // If there is no gear...
+		{
+			for (var kk = 0; kk != aSkins.length; kk++) if (containsText(aSkins[kk], sCharacterName)) // For each skin, check if the character name is present in the skin's filepath.
+			{
+				bHasCharacterSkins = true;		// If it is, flag it as such, merge in the skin and get its name.
+				oContentMgr.openFile(aSkins[kk], true);
+				var sSkinName = getName(aSkins[kk]);
+
+				renderCore('characters', sSkinName + '/' + sSkinName + '_' + sAnimationName); // Render, using the skin name.
+			}
+			if(!bHasCharacterSkins) renderCore('characters', sCharacterName + '/' + sCharacterName + '_' + sAnimationName); // If there's no skins for this character, render using the character name.
+
+			renderCore('charactersShadows', sCharacterName + '/' + 'SHADOW_' + sCharacterName + '_' + sAnimationName); // Render character shadows using the character name, because we don't need shadows for individual skins.
+		}
+		else for (var k = 0; k != aGear.length; k++) // If there are gears, for each gear...
+		{
+			if (unwantedComboCheck()) continue;
+
+			oContentMgr.openFile(aGear[k], true);
+			var sGearName = getName(aGear[k]);
+			var oGear = Scene.findNodeByLabel('gear');
+			var oGearShape = oGear.getObject().getCurrentShape();
+			var bHasGearSkins;
+
+			var aGearChildren = oGear.getNodeChildren(false);
+
+			oIrayOptions.addNodeToNodeList('visibleNodes', oGear); // Add the gear to the canvas.
+			
+			// This will not work in it's current state for gear children, as we don't have a naming convention for them. We'll need to come up with one if we ever need to animate the texture of a gear child.
+			for (var i = 0; i != aCharacterProperties.length; i++) // Loop through all the properties of the character.
+			{
+				var sCharacterPropertyName = aCharacterProperties[i].assetId;
+				
+				if (containsText(sCharacterPropertyName, '!')) // If it's a property we created...
+				{
+					aCharacterPropertyName = sCharacterPropertyName.split('!'); // Find the material and its property using the gear property name.
+					
+					if (aCharacterPropertyName[0] === sGearName) oGearShape.findMaterial(aCharacterPropertyName[1]).findPropertyByLabel(aCharacterPropertyName[2]).linkTo(aCharacterProperties[i]);
+				}
+			}
+			for (var ii = 0; ii != aGearChildren.length; ii++) oIrayOptions.addNodeToNodeList('visibleNodes', aGearChildren[ii]); // Add all gear children to the canvas as well.
+
+			for (var kk = 0; kk != aSkins.length; kk++) if (containsText(aSkins[kk], sGearName)) // Check every skin, to verify if it's applicable for that gear.
+			{
+				bHasGearSkins = true;		// Switch selection to the gear temporarily, so we can load in its skin.
+				oCharacter.select(false);
+				oGear.select(true);
+				oContentMgr.openFile(aSkins[kk], true);
+				oGear.select(false);
+				oCharacter.select(true);
+				var sSkinName = getName(aSkins[kk]);
+
+				renderCore('gear', sSkinName + '_' + sCharacterName + '/' + sSkinName + '_' + sCharacterName + '_' + sAnimationName);
+			}
+			if (!bHasGearSkins) renderCore('gear', sGearName + '_' + sCharacterName + '/' + sGearName + '_' + sCharacterName + '_' + sAnimationName); // If there's no skins for this gear, render it using the gear name.
+			
+			renderCore('gearShadows', sGearName + '_' + sCharacterName + '/' + 'SHADOW_' + sGearName + '_' + sCharacterName + '_' + sAnimationName); // Regardless of skins, render just one set of shadows using the gear name.
+
+			Scene.removeNode(oGear);
+		}	
+		
+		Scene.setPlayRange(DzTimeRange(0, 0)); // Set the play range to 0. The next animation will expand to and overwrite only the frames in which it has data.
+	}
+	Scene.removeNode(oCharacter);
+}
+if (aLoot.length) for (var i = 0; i != aLoot.length; i++) // If there is loot, for each loot...
+{
+	var bHasLootSkins;
+	oContentMgr.openFile(aLoot[i], true);
+	var sLootName = getName(aLoot[i]);
+	var oLoot = Scene.findNodeByLabel('loot');
+	oRoot.addNodeChild(oLoot, true);
+
+	// for each skin, check if the loot name is present in the skin's filepath
+	for (var kk = 0; kk != aSkins.length; kk++) if (containsText(aSkins[kk], sLootName))
+	{
+		// if it is, flag it as such, merge in the skin and get its name
+		bHasLootSkins = true;
+		oContentMgr.openFile(aSkins[kk], true);
+		var sSkinName = getName(aSkins[kk]);
+
+		// render using the skin name
+		renderCore('loot', sSkinName + '/' + sSkinName);
+	}
+	// if there's no skins for this loot, render using the loot name
+	if(!bHasLootSkins) renderCore('loot', sLootName + '/' + sLootName);
+
+	Scene.removeNode(oLoot);
+}
+if (aProps.length) // if there are props...
+{
+	nFrameCount = 1;
+
+	for (var i = 0; i != aProps.length; i++) // for each prop...
+	{
+		oContentMgr.openFile(aProps[i], true); // merge in a prop
+		var sPropName = getName(aProps[i]);
+		var oProp = Scene.findNodeByLabel('prop');
+
+		renderCore('props', sPropName + '/' + sPropName);
+
+		renderCore('propsShadow', sPropName + '/' + 'SHADOW_' + sPropName);
+
+		Scene.removeNode(oProp);
+	}
+}
+if (aItems.length) // if there are items...
+{
+	// prepare the scene to render items
+	oViewport.setCamera('itemCamera');
+	oMainLight.setVisible(false);
+	oShadowLight.setVisible(false);
+	oItemLight.setVisible(true);
+	nAngles = 1;
+	oRenderOptions.imageSize = oItemImageSize;
+
+	for (var i = 0; i != aItems.length; i++) // for each item...
+	{
+		var bHasItemSkins;
+		oContentMgr.openFile(aItems[i], true); // merge in an item
+
+		var sItemName = getName(aItems[i]);
+
+		var oItem = Scene.findNodeByLabel('item');
+
+		// for each skin, check if the item name is present in the skin's filepath
+		for (var kk = 0; kk != aSkins.length; kk++) if (containsText(aSkins[kk], sItemName))
+		{
+			// if it is, flag it as such, merge in the skin and get its name
+			bHasItemSkins = true;
+			oContentMgr.openFile(aSkins[kk], true);
+			var sSkinName = getName(aSkins[kk]);
+
+			// render using the skin name
+			renderCore('items', sSkinName);
+		}
+		// if there's no skins for this item, render using the item name
+		if(!bHasItemSkins) renderCore('items', sItemName);
+
+		Scene.removeNode(oItem);
+	}
+}

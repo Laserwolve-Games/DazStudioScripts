@@ -1,0 +1,17 @@
+(function()
+{
+    var sMainFilePath = 'C:/laserwolveGames/';
+    var sScript = App.scriptArgs[0];
+
+    // we can't choose both a script and a scene in the preferences,
+    // so we'll use this script to load a scene as well.
+    App.getContentMgr().openFile(sMainFilePath + 'templates/masterTemplate.duf', false);
+
+    // run the specified script, if any
+    if (sScript)
+    {
+        var script = new DzScript();
+        script.loadFromFile(sMainFilePath + 'scripts/' + sScript + '.dsa', false);
+        script.execute();
+    }
+})();

@@ -1,0 +1,14 @@
+(function()
+{
+    // use the render image name and location to figure out the canvas folder name and location
+    var sImgFilename = App.getRenderMgr().getRenderOptions().renderImgFilename;
+    var oCanvasDirectory = DzDir(sImgFilename.substring(0, sImgFilename.length - 4) + '_canvases');
+
+    // if a canvases were made, delete all of them, then delete the folder
+    if (oCanvasDirectory.exists())
+    {
+        var aCanvases = oCanvasDirectory.getFilesFromDir(['*.exr'], true); 
+        for (var i = 0; i != aCanvases.length; i++) oCanvasDirectory.remove(aCanvases[i]);
+        oCanvasDirectory.rmdir();
+    }
+})();
