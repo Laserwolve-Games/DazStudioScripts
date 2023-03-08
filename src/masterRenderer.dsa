@@ -80,9 +80,64 @@ function renderCore(sRenderType, sName)
 
 	for (var nAngle = 0; nAngle != nDEGREES_IN_CIRCLE; nAngle = nAngle + nDegrees) // Loop through each angle...
 	{
+		var constructAngle;
+		switch (nAngle)
+		{
+			// Construct's 0 degrees is east, Daz is south.
+			// Construct's degrees rotate counter-clockwise, Daz rotates clockwise.
+			// Construct degrees range from -180 to 180, or 0 to 360, depending on the system. Daz can accept either but defaults to 0 to 360.
+			case 0:
+				 constructAngle = 90;
+				 break;
+			case 22.5:
+				constructAngle = 67.5;
+				break;
+			case 45:
+				constructAngle = 45;
+				break;
+			case 67.5:
+				constructAngle = 22.5;
+				break;
+			case 90:
+				constructAngle = 0;
+				break;
+			case 112.5:
+				constructAngle = -22.5;
+				break;
+			case 135:
+				constructAngle = -45;
+				break;
+			case 157.5:
+				constructAngle = -67.5;
+				break;
+			case 180:
+				constructAngle = -90;
+				break;
+			case 202.5:
+				constructAngle = -112.5;
+				break;
+			case 225:
+				constructAngle = -135;
+				break;
+			case 247.5:
+				constructAngle = -157.5;
+				break;
+			case 270:
+				constructAngle = 180;
+				break;
+			case 292.5:
+				constructAngle = 157.5;
+				break;
+			case 315:
+				constructAngle = 135;
+				break;
+			case 337.5:
+				constructAngle = 112.5;
+				break;
+		}
 		for (var nFrame = 0; nFrame != nFrameCount; nFrame++) // Loop through each frame...
-		{									//sCharacterName + '/' + sAnimationName
-			var sFinalFilePath = sExportFilePath + '/' + sName + '_' + nAngle + '/' + nFrame + '.png'; // Conglamorate lots of variables to create our exporting filepath.
+		{
+			var sFinalFilePath = sExportFilePath + '/' + sName + constructAngle + '/' + nFrame + '.png'; // Conglamorate lots of variables to create our exporting filepath.
 
 			if (oSourceDirectory.exists(sFinalFilePath)) continue; // Set the filepath. If it already exists, skip it.
 			oRenderOptions.renderImgFilename = sFinalFilePath;
@@ -152,7 +207,7 @@ for (var i = 0; i != aCharacters.length; i++) // For each character...
 			}
 			if(!bHasCharacterSkins) renderCore('characters', sCharacterName + '/' + sAnimationName); // If there's no skins for this character, render using the character name.
 
-			renderCore('charactersShadows', sCharacterName + '/' + 'SHADOW_' + sCharacterName + '_' + sAnimationName); // Render character shadows using the character name, because we don't need shadows for individual skins.
+			renderCore('charactersShadows', 'SHADOW_' + sCharacterName + '/' + sAnimationName); // Render character shadows using the character name, because we don't need shadows for individual skins.
 		}
 		else for (var k = 0; k != aGear.length; k++) // If there are gears, for each gear...
 		{
