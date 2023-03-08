@@ -2,12 +2,12 @@ var sScript = App.scriptArgs[0];
 
 // we can't choose both a script and a scene in the preferences,
 // so we'll use this script to load a scene as well.
-App.getContentMgr().openFile('C:/assets/templatestemplates/masterTemplate.duf', false);
+App.getContentMgr().openFile('C:/assets/templates/masterTemplate.duf', false);
 
 // run the specified script, if any
 if (sScript)
 {
     var script = new DzScript();
-    script.loadFromFile('C:/DazStudioScripts/srcscripts/' + sScript + '.dsa', false);
+    script.loadFromFile('C:/DazStudioScripts/src/' + sScript + '.dsa', false);
     script.execute();
 }
