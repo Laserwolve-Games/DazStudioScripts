@@ -1,0 +1,36 @@
+var sMainFilepath = 'C:/assets/output/';
+var aOutputContents = DzDir(sMainFilepath).entryList("", DzDir.Dirs | DzDir.NoDotAndDotDot);
+
+for (var i = 0; i != aOutputContents.length; i++) // loop through all subjects
+{	
+	var sSubjectFilepath = sMainFilepath + aOutputContents[i];
+	var oSubjectZip = DzZipFile(sSubjectFilepath + ".zip");
+	var oSubjectDirectory = DzDir(sSubjectFilepath);
+	var aSubjectContents = oSubjectDirectory.entryList("", DzDir.Dirs | DzDir.NoDotAndDotDot);
+
+	for (var j = 0; j != aSubjectContents.length; j++) // loop through all animations
+	{
+		var sAnimationFilepath = sSubjectFilepath + '/' + aSubjectContents[j];
+		var oAnimationZip = DzZipFile(sAnimationFilepath + ".zip");
+		var oAnimationDirectory = DzDir(sAnimationFilepath);
+		var aAnimationContents = oAnimationDirectory.getFilesFromDir(['*.png'], false);
+
+		oAnimationZip.open(DzZipFile.WriteOnly);
+		oAnimationZip.compressAll(sAnimationFilepath, false);
+		oAnimationZip.close();
+
+		for (var k = 0; k != aAnimationContents.length; k++) oAnimationDirectory.remove(aAnimationContents[k]);
+
+		oAnimationDirectory.rmdir();
+	}
+
+	oSubjectZip.open(DzZipFile.WriteOnly);
+	oSubjectZip.compressAll(sSubjectFilepath);
+	oSubjectZip.close();
+
+	aSubjectContents = oSubjectDirectory.getFilesFromDir(['*.zip'], false); // This is now a bunch of zip file instead of folders
+
+	for (var j = 0; j != aSubjectContents.length; j++) oSubjectDirectory.remove(aSubjectContents[j]);	
+
+	oSubjectDirectory.rmdir();
+}
