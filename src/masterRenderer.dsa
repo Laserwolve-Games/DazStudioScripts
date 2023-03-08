@@ -1,10 +1,7 @@
-var nInstanceNumber = App.instanceName(); // The current instance number.
-
-var sMainFilePath = 'C:/laserwolveGames/';		// Here are filepaths and directories.
-var sExportFilePath = sMainFilePath + 'output/';
-var sScriptsPath = sMainFilePath + 'scripts/';
-var oSourceDirectory = new DzDir(sScriptsPath + 'engine' + nInstanceNumber);
-var oUnwantedCombos = new DzFile(sScriptsPath + 'unwantedCombos.csv');
+var sExportFilePath = 'C:/assets/output/';		// Here are filepaths and directories.
+var sScriptsPath = 'C:/DazStudioScripts/src/';
+var oSourceDirectory = new DzDir('C:/assets/engine');
+var oUnwantedCombos = new DzFile('C:/DazStudioScripts/dataunwantedCombos.csv');
 
 var aCharacters = oSourceDirectory.getFilesFromDir(['character_*'], true);		// Here are arrays of full filepaths to files.
 var aAnimations = oSourceDirectory.getFilesFromDir(['*animation_*'], true);
@@ -84,8 +81,8 @@ function renderCore(sRenderType, sName)
 	for (var nAngle = 0; nAngle != nDEGREES_IN_CIRCLE; nAngle = nAngle + nDegrees) // Loop through each angle...
 	{
 		for (var nFrame = 0; nFrame != nFrameCount; nFrame++) // Loop through each frame...
-		{
-			var sFinalFilePath = sExportFilePath + sRenderType + '/' + sName + '_' + nAngle + '_' + nFrame + '.png'; // Conglamorate lots of variables to create our exporting filepath.
+		{									//sCharacterName + '/' + sAnimationName
+			var sFinalFilePath = sExportFilePath + '/' + sName + '_' + nAngle + '/' + nFrame + '.png'; // Conglamorate lots of variables to create our exporting filepath.
 
 			if (oSourceDirectory.exists(sFinalFilePath)) continue; // Set the filepath. If it already exists, skip it.
 			oRenderOptions.renderImgFilename = sFinalFilePath;
@@ -153,7 +150,7 @@ for (var i = 0; i != aCharacters.length; i++) // For each character...
 
 				renderCore('characters', sSkinName + '/' + sSkinName + '_' + sAnimationName); // Render, using the skin name.
 			}
-			if(!bHasCharacterSkins) renderCore('characters', sCharacterName + '/' + sCharacterName + '_' + sAnimationName); // If there's no skins for this character, render using the character name.
+			if(!bHasCharacterSkins) renderCore('characters', sCharacterName + '/' + sAnimationName); // If there's no skins for this character, render using the character name.
 
 			renderCore('charactersShadows', sCharacterName + '/' + 'SHADOW_' + sCharacterName + '_' + sAnimationName); // Render character shadows using the character name, because we don't need shadows for individual skins.
 		}
