@@ -34,3 +34,6 @@ for (var i = 0; i != aOutputContents.length; i++) // loop through all subjects
 
 	oSubjectDirectory.rmdir();
 }
+
+Scene.clear();
+MainWindow.close();
