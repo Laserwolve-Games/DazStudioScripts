@@ -20,12 +20,13 @@ var oActiveCanvasProperty = oIrayOptions.getPropertyGroups().findProperty('Activ
 
 var nAngles = 16;		// These are the parameters to be utilized.
 var nFrameRate = 30;
-var nFrameCount = 10;
+var nEveryNthFrame = 4;
 var nDistanceMultiplier = 2;
 var oItemImageSize = Size(256, 256);
-
-const nDEGREES_IN_CIRCLE = 360;		// These are constants, which aren't different from variables in ES5.
-const nDAZ_TICKS = 4800;
+var nDEGREES_IN_CIRCLE = 360;
+var nDAZ_TICKS = 4800;
+var nDegrees = nDEGREES_IN_CIRCLE / nAngles;
+var nTicksPerFrame = nDAZ_TICKS / nFrameRate;
 
 var oRoot = Scene.findNodeByLabel('root');		// These are the nodes that are within the masterTemplate.
 var oMainLight = Scene.findNodeByLabel('mainLight');
@@ -71,12 +72,8 @@ function setMatte(bBool) // Set the Matte Parameter of a character and its child
 /*********************************************************************/
 function renderCore(sRenderType, sName)
 {
-	var nDegrees = nDEGREES_IN_CIRCLE / nAngles;		// Here are variables we determined once we start rendering.
-	var nTicksPerFrame = nDAZ_TICKS / nFrameRate;
-	var nFramesTotal = Scene.getPlayRange().end / nTicksPerFrame; // This is 0-based.
-	
-	if (nFrameCount > nFramesTotal + 1) nFrameCount = nFramesTotal + 1; // If we want more frames then there are in the scene, just get every frame of the scene instead.
-	var nFrameDivider = nFramesTotal / nFrameCount;
+	var nFramesTotal = (Scene.getPlayRange().end / nTicksPerFrame) + 1;		// Here are variables we determined once we start rendering.
+	var nFrameCount = nFramesTotal / nEveryNthFrame;
 
 	for (var nAngle = 0; nAngle != nDEGREES_IN_CIRCLE; nAngle = nAngle + nDegrees) // Loop through each angle...
 	{
@@ -135,14 +132,14 @@ function renderCore(sRenderType, sName)
 				constructAngle = 112.5;
 				break;
 		}
-		for (var nFrame = 0; nFrame != nFrameCount; nFrame++) // Loop through each frame...
+		for (var nFrame = 0; nFrame <= nFrameCount; nFrame++) // Loop through each frame...
 		{
-			var sFinalFilePath = sExportFilePath + '/' + sName + constructAngle + '/' + nFrame + '.png'; // Conglamorate lots of variables to create our exporting filepath.
+			var sFinalFilePath = sExportFilePath + '/' + sName + constructAngle + '/' + ("000"+ nFrame).slice(-3) + '.png'; // Conglamorate lots of variables to create our exporting filepath.
 
 			if (oSourceDirectory.exists(sFinalFilePath)) continue; // Set the filepath. If it already exists, skip it.
 			oRenderOptions.renderImgFilename = sFinalFilePath;
 
-			Scene.setFrame(Math.round(nFrameDivider * nFrame)); // Set the current frame, and angle.
+			Scene.setFrame(nFrame * nEveryNthFrame); // Set the current frame, and angle.
 			oRoot.getYRotControl().setValue(nAngle);
 
 			if (containsText(sRenderType, 'Shadows')) // For shadows, move the root node off-screen along the Z axis of the shadowLight, toggle the shadow light and set the matte parameter(s).
@@ -286,7 +283,7 @@ if (aLoot.length) for (var i = 0; i != aLoot.length; i++) // If there is loot, f
 }
 if (aProps.length) // if there are props...
 {
-	nFrameCount = 1;
+	// nFrameCount = 1;
 
 	for (var i = 0; i != aProps.length; i++) // for each prop...
 	{
