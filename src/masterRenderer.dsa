@@ -1,8 +1,7 @@
 var sScriptsPath = 'C:/DazStudioScripts/src/';	// Here are filepaths and directories.
 var oSourceDirectory = new DzDir('C:/assets/engine');
 var oUnwantedCombos = new DzFile('C:/DazStudioScripts/dataunwantedCombos.csv');
-
-var aCharacters = oSourceDirectory.getFilesFromDir(['character_*'], true);		// Here are arrays of full filepaths to files.
+var aCharacters = oSourceDirectory.getFilesFromDir(['character_*'], true);		
 var aAnimations = oSourceDirectory.getFilesFromDir(['*animation_*'], true);
 var aGear = oSourceDirectory.getFilesFromDir(['gear_*'], true);
 var aItems = oSourceDirectory.getFilesFromDir(['item_*'], true);
@@ -21,7 +20,7 @@ var nAngles = 16;		// These are the parameters to be utilized.
 var nFrameRate = 30;
 var nEveryNthFrame = 3;
 var nDistanceMultiplier = 2;
-var oItemImageSize = Size(256, 256);
+var oItemImageSize = Size(62, 62);
 var nDEGREES_IN_CIRCLE = 360;
 var nDAZ_TICKS = 4800;
 var nTicksPerFrame = nDAZ_TICKS / nFrameRate;
@@ -82,53 +81,38 @@ function renderCore(sName, sType, sAnimationName)
 			// Construct's 0 degrees is east, Daz is south.
 			// Construct's degrees rotate counter-clockwise, Daz rotates clockwise.
 			// Construct degrees range from -180 to 180, or 0 to 360, depending on the system. Daz can accept either but defaults to 0 to 360.
-			case 0:
-				 constructAngle = 90;
+			case 0: nConstructAngle = 90;
 				 break;
-			case 22.5:
-				constructAngle = 67.5;
+			case 22.5: nConstructAngle = 67.5;
 				break;
-			case 45:
-				constructAngle = 45;
+			case 45: nConstructAngle = 45;
 				break;
-			case 67.5:
-				constructAngle = 22.5;
+			case 67.5: nConstructAngle = 22.5;
 				break;
-			case 90:
-				constructAngle = 0;
+			case 90: nConstructAngle = 0;
 				break;
-			case 112.5:
-				constructAngle = -22.5;
+			case 112.5: nConstructAngle = -22.5;
 				break;
-			case 135:
-				constructAngle = -45;
+			case 135: nConstructAngle = -45;
 				break;
 			case 157.5:
 				constructAngle = -67.5;
 				break;
-			case 180:
-				constructAngle = -90;
+			case 180: nConstructAngle = -90;
 				break;
-			case 202.5:
-				constructAngle = -112.5;
+			case 202.5: nConstructAngle = -112.5;
 				break;
-			case 225:
-				constructAngle = -135;
+			case 225: nConstructAngle = -135;
 				break;
-			case 247.5:
-				constructAngle = -157.5;
+			case 247.5: nConstructAngle = -157.5;
 				break;
-			case 270:
-				constructAngle = 180;
+			case 270: nConstructAngle = 180;
 				break;
-			case 292.5:
-				constructAngle = 157.5;
+			case 292.5: nConstructAngle = 157.5;
 				break;
-			case 315:
-				constructAngle = 135;
+			case 315: nConstructAngle = 135;
 				break;
-			case 337.5:
-				constructAngle = 112.5;
+			case 337.5: nConstructAngle = 112.5;
 				break;
 		}
 		for (var nFrame = 0; nFrame <= nFrameCount; nFrame++) // Loop through each frame...
