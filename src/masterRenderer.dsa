@@ -4,7 +4,6 @@ var oUnwantedCombos = new DzFile('C:/DazStudioScripts/dataunwantedCombos.csv');
 var aCharacters = oSourceDirectory.getFilesFromDir(['character_*'], true);		
 var aAnimations = oSourceDirectory.getFilesFromDir(['*animation_*'], true);
 var aGear = oSourceDirectory.getFilesFromDir(['gear_*'], true);
-var aItems = oSourceDirectory.getFilesFromDir(['item_*'], true);
 var aLoot = oSourceDirectory.getFilesFromDir(['loot_*'], true);
 var aProps = oSourceDirectory.getFilesFromDir(['prop_*'], true);
 var aSkins = oSourceDirectory.getFilesFromDir(['skin_*'], true);
@@ -20,15 +19,12 @@ var nAngles = 16;		// These are the parameters to be utilized.
 var nFrameRate = 30;
 var nEveryNthFrame = 3;
 var nDistanceMultiplier = 2;
-var oItemImageSize = Size(62, 62);
 var nDEGREES_IN_CIRCLE = 360;
 var nDAZ_TICKS = 4800;
 var nTicksPerFrame = nDAZ_TICKS / nFrameRate;
 
 var oRoot = Scene.findNodeByLabel('root');		// These are the nodes that are within the masterTemplate.
-var oMainLight = Scene.findNodeByLabel('mainLight');
 var oShadowLight = Scene.findNodeByLabel('shadowLight');
-var oItemLight = Scene.findNodeByLabel('itemLight');
 /*********************************************************************/
 function containsText(sSource, sTextToFind) // Check if a string contains another string.
 {
@@ -277,36 +273,3 @@ for (var i = 0; i != aProps.length; i++) // For each prop...
 
 	Scene.removeNode(oProp);
 }
-if (aItems.length) // If there are items...
-{
-	oViewport.setCamera('itemCamera');	// Prepare the scene to render items.
-	oMainLight.setVisible(false);
-	oShadowLight.setVisible(false);
-	oItemLight.setVisible(true);
-	nAngles = 1;
-	oRenderOptions.imageSize = oItemImageSize;
-
-	for (var i = 0; i != aItems.length; i++) // For each item...
-	{
-		var bHasItemSkins;
-		oContentMgr.openFile(aItems[i], true); // Merge in an item.
-
-		var sItemName = getName(aItems[i]);
-
-		var oItem = Scene.findNodeByLabel('item');
-
-		for (var kk = 0; kk != aSkins.length; kk++) if (containsText(aSkins[kk], sItemName)) // For each skin, check if the item name is present in the skin's filepath.
-		{
-			bHasItemSkins = true;		// If it is, flag it as such, merge in the skin and get its name.
-			oContentMgr.openFile(aSkins[kk], true);
-			var sSkinName = getName(aSkins[kk]);
-
-			renderCore(sSkinName, 'item', 'static');		// Render using the skin name.
-		}
-		if(!bHasItemSkins) renderCore(sItemName, 'item', 'static'); 		// If there's no skins for this item, render using the item name.
-
-		Scene.removeNode(oItem);
-	}
-}
-Scene.clear();
-MainWindow.close();
