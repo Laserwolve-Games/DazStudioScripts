@@ -1,5 +1,4 @@
-var sExportFilePath = 'C:/assets/output/';		// Here are filepaths and directories.
-var sScriptsPath = 'C:/DazStudioScripts/src/';
+var sScriptsPath = 'C:/DazStudioScripts/src/';	// Here are filepaths and directories.
 var oSourceDirectory = new DzDir('C:/assets/engine');
 var oUnwantedCombos = new DzFile('C:/DazStudioScripts/dataunwantedCombos.csv');
 
@@ -25,7 +24,6 @@ var nDistanceMultiplier = 2;
 var oItemImageSize = Size(256, 256);
 var nDEGREES_IN_CIRCLE = 360;
 var nDAZ_TICKS = 4800;
-var nDegrees = nDEGREES_IN_CIRCLE / nAngles;
 var nTicksPerFrame = nDAZ_TICKS / nFrameRate;
 
 var oRoot = Scene.findNodeByLabel('root');		// These are the nodes that are within the masterTemplate.
@@ -70,14 +68,15 @@ function setMatte(bBool) // Set the Matte Parameter of a character and its child
 	}
 }
 /*********************************************************************/
-function renderCore(sRenderType, sName)
+function renderCore(sName, sType, sAnimationName)
 {
+	var nDegrees = nDEGREES_IN_CIRCLE / nAngles;
 	var nFramesTotal = (Scene.getPlayRange().end / nTicksPerFrame) + 1;		// Here are variables we determined once we start rendering.
 	var nFrameCount = nFramesTotal / nEveryNthFrame;
 
 	for (var nAngle = 0; nAngle != nDEGREES_IN_CIRCLE; nAngle = nAngle + nDegrees) // Loop through each angle...
 	{
-		var constructAngle;
+		var nConstructAngle;
 		switch (nAngle)
 		{
 			// Construct's 0 degrees is east, Daz is south.
@@ -134,7 +133,7 @@ function renderCore(sRenderType, sName)
 		}
 		for (var nFrame = 0; nFrame <= nFrameCount; nFrame++) // Loop through each frame...
 		{
-			var sFinalFilePath = sExportFilePath + '/' + sName + constructAngle + '/' + ("000"+ nFrame).slice(-3) + '.png'; // Conglamorate lots of variables to create our exporting filepath.
+			var sFinalFilePath = 'C:/assets/output/' + sName + '_' + sType + '/' + sAnimationName + '_' + nConstructAngle + '/' + ("000"+ nFrame).slice(-3) + '.png'; // Conglamorate lots of variables to create our exporting filepath.
 
 			if (oSourceDirectory.exists(sFinalFilePath)) continue; // Set the filepath. If it already exists, skip it.
 			oRenderOptions.renderImgFilename = sFinalFilePath;
@@ -142,14 +141,14 @@ function renderCore(sRenderType, sName)
 			Scene.setFrame(nFrame * nEveryNthFrame); // Set the current frame, and angle.
 			oRoot.getYRotControl().setValue(nAngle);
 
-			if (containsText(sRenderType, 'Shadows')) // For shadows, move the root node off-screen along the Z axis of the shadowLight, toggle the shadow light and set the matte parameter(s).
+			if (containsText(sType, 'Shadow')) // For shadows, move the root node off-screen along the Z axis of the shadowLight, toggle the shadow light and set the matte parameter(s).
 			{
 				oRoot.getXPosControl().setValue(252.2766 * nDistanceMultiplier);
 				oRoot.getYPosControl().setValue(596.9373 * nDistanceMultiplier);
 				oRoot.getZPosControl().setValue(541.0090 * nDistanceMultiplier);
 
 				oShadowLight.setVisible(true);
-				if(sRenderType === 'gearShadows') setMatte(true);
+				if(sType === 'gearShadows') setMatte(true);
 			}
 			else
 			{
@@ -160,7 +159,7 @@ function renderCore(sRenderType, sName)
 				oShadowLight.setVisible(false);
 				setMatte(false);	
 			}
-			if (sRenderType === 'gear') oActiveCanvasProperty.setValue(1);		// Set the appropriate canvas.
+			if (sType === 'gear') oActiveCanvasProperty.setValue(1);		// Set the appropriate canvas.
 			else oActiveCanvasProperty.setValue(0);
 			
 			while(backgroundProgressIsActive()) processEvents();		// Wait for everything else to finish first, specifically the mesh smoother, then render.
@@ -200,11 +199,11 @@ for (var i = 0; i != aCharacters.length; i++) // For each character...
 				oContentMgr.openFile(aSkins[kk], true);
 				var sSkinName = getName(aSkins[kk]);
 
-				renderCore('characters', sSkinName + '/' + sSkinName + '_' + sAnimationName); // Render, using the skin name.
+				renderCore(sSkinName, 'character', sAnimationName); // Render, using the skin name.
 			}
-			if(!bHasCharacterSkins) renderCore('characters', sCharacterName + '/' + sAnimationName); // If there's no skins for this character, render using the character name.
+			if(!bHasCharacterSkins) renderCore(sCharacterName, 'character', sAnimationName); // If there's no skins for this character, render using the character name.
 
-			renderCore('charactersShadows', 'SHADOW_' + sCharacterName + '/' + sAnimationName); // Render character shadows using the character name, because we don't need shadows for individual skins.
+			renderCore(sCharacterName, 'characterShadow', sAnimationName); // Render character shadows using the character name, because we don't need shadows for individual skins.
 		}
 		else for (var k = 0; k != aGear.length; k++) // If there are gears, for each gear...
 		{
@@ -220,6 +219,7 @@ for (var i = 0; i != aCharacters.length; i++) // For each character...
 
 			oIrayOptions.addNodeToNodeList('visibleNodes', oGear); // Add the gear to the canvas.
 			
+			// Animate surfaces:
 			// This will not work in it's current state for gear children, as we don't have a naming convention for them. We'll need to come up with one if we ever need to animate the texture of a gear child.
 			for (var i = 0; i != aCharacterProperties.length; i++) // Loop through all the properties of the character.
 			{
@@ -244,11 +244,11 @@ for (var i = 0; i != aCharacters.length; i++) // For each character...
 				oCharacter.select(true);
 				var sSkinName = getName(aSkins[kk]);
 
-				renderCore('gear', sSkinName + '_' + sCharacterName + '/' + sSkinName + '_' + sCharacterName + '_' + sAnimationName);
+				renderCore(sSkinName, 'gear', sAnimationName);
 			}
-			if (!bHasGearSkins) renderCore('gear', sGearName + '_' + sCharacterName + '/' + sGearName + '_' + sCharacterName + '_' + sAnimationName); // If there's no skins for this gear, render it using the gear name.
+			if (!bHasGearSkins) renderCore(sGearName, 'gear', sAnimationName); // If there's no skins for this gear, render it using the gear name.
 			
-			renderCore('gearShadows', sGearName + '_' + sCharacterName + '/' + 'SHADOW_' + sGearName + '_' + sCharacterName + '_' + sAnimationName); // Regardless of skins, render just one set of shadows using the gear name.
+			renderCore(sGearName, 'gearShadow', sAnimationName); // Regardless of skins, render just one set of shadows using the gear name.
 
 			Scene.removeNode(oGear);
 		}	
@@ -257,7 +257,7 @@ for (var i = 0; i != aCharacters.length; i++) // For each character...
 	}
 	Scene.removeNode(oCharacter);
 }
-if (aLoot.length) for (var i = 0; i != aLoot.length; i++) // If there is loot, for each loot...
+for (var i = 0; i != aLoot.length; i++) // For each loot...
 {
 	var bHasLootSkins;
 	oContentMgr.openFile(aLoot[i], true);
@@ -281,55 +281,45 @@ if (aLoot.length) for (var i = 0; i != aLoot.length; i++) // If there is loot, f
 
 	Scene.removeNode(oLoot);
 }
-if (aProps.length) // if there are props...
+for (var i = 0; i != aProps.length; i++) // For each prop...
 {
-	// nFrameCount = 1;
+	oContentMgr.openFile(aProps[i], true); // merge in a prop
+	var sPropName = getName(aProps[i]);
+	var oProp = Scene.findNodeByLabel('prop');
 
-	for (var i = 0; i != aProps.length; i++) // for each prop...
-	{
-		oContentMgr.openFile(aProps[i], true); // merge in a prop
-		var sPropName = getName(aProps[i]);
-		var oProp = Scene.findNodeByLabel('prop');
+	renderCore(sPropName, 'prop', 'static');
 
-		renderCore('props', sPropName + '/' + sPropName);
+	renderCore(sPropName, 'propShadow', 'static');
 
-		renderCore('propsShadow', sPropName + '/' + 'SHADOW_' + sPropName);
-
-		Scene.removeNode(oProp);
-	}
+	Scene.removeNode(oProp);
 }
-if (aItems.length) // if there are items...
+if (aItems.length) // If there are items...
 {
-	// prepare the scene to render items
-	oViewport.setCamera('itemCamera');
+	oViewport.setCamera('itemCamera');	// Prepare the scene to render items.
 	oMainLight.setVisible(false);
 	oShadowLight.setVisible(false);
 	oItemLight.setVisible(true);
 	nAngles = 1;
 	oRenderOptions.imageSize = oItemImageSize;
 
-	for (var i = 0; i != aItems.length; i++) // for each item...
+	for (var i = 0; i != aItems.length; i++) // For each item...
 	{
 		var bHasItemSkins;
-		oContentMgr.openFile(aItems[i], true); // merge in an item
+		oContentMgr.openFile(aItems[i], true); // Merge in an item.
 
 		var sItemName = getName(aItems[i]);
 
 		var oItem = Scene.findNodeByLabel('item');
 
-		// for each skin, check if the item name is present in the skin's filepath
-		for (var kk = 0; kk != aSkins.length; kk++) if (containsText(aSkins[kk], sItemName))
+		for (var kk = 0; kk != aSkins.length; kk++) if (containsText(aSkins[kk], sItemName)) // For each skin, check if the item name is present in the skin's filepath.
 		{
-			// if it is, flag it as such, merge in the skin and get its name
-			bHasItemSkins = true;
+			bHasItemSkins = true;		// If it is, flag it as such, merge in the skin and get its name.
 			oContentMgr.openFile(aSkins[kk], true);
 			var sSkinName = getName(aSkins[kk]);
 
-			// render using the skin name
-			renderCore('items', sSkinName);
+			renderCore(sSkinName, 'item', 'static');		// Render using the skin name.
 		}
-		// if there's no skins for this item, render using the item name
-		if(!bHasItemSkins) renderCore('items', sItemName);
+		if(!bHasItemSkins) renderCore(sItemName, 'item', 'static'); 		// If there's no skins for this item, render using the item name.
 
 		Scene.removeNode(oItem);
 	}
