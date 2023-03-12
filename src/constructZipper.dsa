@@ -23,7 +23,6 @@ for (var i = 0; i != aOutputContents.length; i++) // loop through all subjects
 
 		oAnimationDirectory.rmdir();
 	}
-
 	oSubjectZip.open(DzZipFile.WriteOnly);
 	oSubjectZip.compressAll(sSubjectFilepath);
 	oSubjectZip.close();
@@ -34,6 +33,5 @@ for (var i = 0; i != aOutputContents.length; i++) // loop through all subjects
 
 	oSubjectDirectory.rmdir();
 }
-
 Scene.clear();
 MainWindow.close();

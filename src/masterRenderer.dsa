@@ -20,7 +20,7 @@ var oActiveCanvasProperty = oIrayOptions.getPropertyGroups().findProperty('Activ
 
 var nAngles = 16;		// These are the parameters to be utilized.
 var nFrameRate = 30;
-var nEveryNthFrame = 4;
+var nEveryNthFrame = 3;
 var nDistanceMultiplier = 2;
 var oItemImageSize = Size(256, 256);
 var nDEGREES_IN_CIRCLE = 360;
@@ -334,3 +334,5 @@ if (aItems.length) // if there are items...
 		Scene.removeNode(oItem);
 	}
 }
+Scene.clear();
+MainWindow.close();
