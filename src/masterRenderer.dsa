@@ -1,12 +1,12 @@
 var sScriptsPath = 'C:/DazStudioScripts/src/';	// Here are filepaths and directories.
 var oSourceDirectory = new DzDir('C:/assets/engine');
 var oUnwantedCombos = new DzFile('C:/DazStudioScripts/dataunwantedCombos.csv');
-var aCharacters = oSourceDirectory.getFilesFromDir(['character_*'], true);		
-var aAnimations = oSourceDirectory.getFilesFromDir(['*animation_*'], true);
-var aGear = oSourceDirectory.getFilesFromDir(['gear_*'], true);
-var aLoot = oSourceDirectory.getFilesFromDir(['loot_*'], true);
-var aProps = oSourceDirectory.getFilesFromDir(['prop_*'], true);
-var aSkins = oSourceDirectory.getFilesFromDir(['skin_*'], true);
+var aCharacters = oSourceDirectory.getFilesFromDir(['*_character.duf'], true);		
+var aAnimations = oSourceDirectory.getFilesFromDir(['*_animation.duf'], true);
+var aGear = oSourceDirectory.getFilesFromDir(['*_gear.duf'], true);
+var aLoot = oSourceDirectory.getFilesFromDir(['*_loot.duf'], true);
+var aProps = oSourceDirectory.getFilesFromDir(['*_prop.duf'], true);
+var aSkins = oSourceDirectory.getFilesFromDir(['*_skin.duf'], true);
 
 var oContentMgr = App.getContentMgr();		// Here are various managers and settings that we need.
 var oRenderMgr = App.getRenderMgr();
@@ -47,7 +47,7 @@ function unwantedComboCheck() // Check unwantedCombos.csv, and return true only 
 /*********************************************************************/
 function getName(sFileName) // Obtain the desired name out of a filepath or filename.
 {
-	return sFileName.split('_').pop().split('.')[0];
+	return sFileName.split('/').pop().split('_')[0];
 }
 /*********************************************************************/
 function setMatte(bBool) // Set the Matte Parameter of a character and its children.
@@ -224,11 +224,11 @@ for (var i = 0; i != aCharacters.length; i++) // For each character...
 				oCharacter.select(true);
 				var sSkinName = getName(aSkins[kk]);
 
-				renderCore(sSkinName, 'gear', sAnimationName);
+				renderCore(sCharacterName + '_' + sSkinName, 'gear', sAnimationName);
 			}
-			if (!bHasGearSkins) renderCore(sGearName, 'gear', sAnimationName); // If there's no skins for this gear, render it using the gear name.
+			if (!bHasGearSkins) renderCore(sCharacterName + '_' + sGearName, 'gear', sAnimationName); // If there's no skins for this gear, render it using the gear name.
 			
-			renderCore(sGearName, 'gearShadow', sAnimationName); // Regardless of skins, render just one set of shadows using the gear name.
+			renderCore(sCharacterName + '_' + sGearName, 'gearShadow', sAnimationName); // Regardless of skins, render just one set of shadows using the gear name.
 
 			Scene.removeNode(oGear);
 		}	
@@ -254,10 +254,10 @@ for (var i = 0; i != aLoot.length; i++) // For each loot...
 		var sSkinName = getName(aSkins[kk]);
 
 		// render using the skin name
-		renderCore('loot', sSkinName + '/' + sSkinName);
+		renderCore(sSkinName, 'loot', 'static');
 	}
 	// if there's no skins for this loot, render using the loot name
-	if(!bHasLootSkins) renderCore('loot', sLootName + '/' + sLootName);
+	if(!bHasLootSkins) renderCore(sLootName, 'loot', 'static');
 
 	Scene.removeNode(oLoot);
 }

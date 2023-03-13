@@ -1,5 +1,4 @@
-,UNARMED,WEAPON
-man,,bikini
-man,,bra
-man,,shortHair
-woman,,drifterHair
+,walkUnarmed,simpleMace
+,walkUnarmed,simpleSword
+,idleUnarmed,simpleMace
+,idleUnarmed,simpleSword
