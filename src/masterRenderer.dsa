@@ -128,7 +128,7 @@ function renderCore(sName, sType, sAnimationName)
 				oRoot.getZPosControl().setValue(541.0090 * nDistanceMultiplier);
 
 				oShadowLight.setVisible(true);
-				if(sType === 'gearShadows') setMatte(true);
+				if(sType === 'gearShadow') setMatte(true);
 			}
 			else
 			{
