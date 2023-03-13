@@ -1,10 +1,11 @@
 var sScriptsPath = 'C:/DazStudioScripts/src/';	// Here are filepaths and directories.
 var oSourceDirectory = new DzDir('C:/assets/engine');
 var oUnwantedCombos = new DzFile('C:/DazStudioScripts/dataunwantedCombos.csv');
-var aSubjects = oSourceDirectory.getFilesFromDir(['*_loot.duf', '*_prop.duf'], true);
 var aCharacters = oSourceDirectory.getFilesFromDir(['*_character.duf'], true);		
 var aAnimations = oSourceDirectory.getFilesFromDir(['*_animation.duf'], true);
 var aGear = oSourceDirectory.getFilesFromDir(['*_gear.duf'], true);
+var aLoot = oSourceDirectory.getFilesFromDir(['*_loot.duf'], true);
+var aProps = oSourceDirectory.getFilesFromDir(['*_prop.duf'], true);
 var aSkins = oSourceDirectory.getFilesFromDir(['*_skin.duf'], true);
 
 var oContentMgr = App.getContentMgr();		// Here are various managers and settings that we need.
@@ -236,28 +237,39 @@ for (var i = 0; i != aCharacters.length; i++) // For each character...
 	}
 	Scene.removeNode(oCharacter);
 }
-for (var i = 0; i != aSubjects.length; i++) // For each subject...
+for (var i = 0; i != aLoot.length; i++) // For each loot...
 {
-	var bHasSkins;
-	oContentMgr.openFile(aSubjects[i], true);
-	var sSubjectName = getName(aSubjects[i]);
-	var sType = aSubjects[i].split('/').pop().split('_').split('.')[0];
-	var oSubject = Scene.findNodeByLabel('subject');
-	oRoot.addNodeChild(oSubject, true);
+	var bHasLootSkins;
+	oContentMgr.openFile(aLoot[i], true);
+	var sLootName = getName(aLoot[i]);
+	var oLoot = Scene.findNodeByLabel('loot');
+	oRoot.addNodeChild(oLoot, true);
 
-	// for each skin or prop, check if the loot or prop's name is present in the skin's filepath
-	for (var kk = 0; kk != aSkins.length; kk++) if (containsText(aSkins[kk], sSubjectName))
+	// for each skin, check if the loot name is present in the skin's filepath
+	for (var kk = 0; kk != aSkins.length; kk++) if (containsText(aSkins[kk], sLootName))
 	{
 		// if it is, flag it as such, merge in the skin and get its name
-		bHasSkins = true;
+		bHasLootSkins = true;
 		oContentMgr.openFile(aSkins[kk], true);
 		var sSkinName = getName(aSkins[kk]);
 
 		// render using the skin name
-		renderCore(sSkinName, sType, 'static');
+		renderCore(sSkinName, 'loot', 'static');
 	}
 	// if there's no skins for this loot, render using the loot name
-	if(!bHasSkins) renderCore(sSubjectName, sType, 'static');
+	if(!bHasLootSkins) renderCore(sLootName, 'loot', 'static');
 
-	Scene.removeNode(oSubject);
+	Scene.removeNode(oLoot);
+}
+for (var i = 0; i != aProps.length; i++) // For each prop...
+{
+	oContentMgr.openFile(aProps[i], true); // merge in a prop
+	var sPropName = getName(aProps[i]);
+	var oProp = Scene.findNodeByLabel('prop');
+
+	renderCore(sPropName, 'prop', 'static');
+
+	renderCore(sPropName, 'propShadow', 'static');
+
+	Scene.removeNode(oProp);
 }
